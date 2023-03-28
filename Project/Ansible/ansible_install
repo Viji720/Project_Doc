@@ -1,0 +1,98 @@
+# Launch an Amazon-Ec2-instance and name it as Ansible-server
+
+Run below commands
+sudo -i
+sudo yum update
+hostname ansible-server
+vi /etc/hostname
+
+#Installing ansible
+yum install python3-pip -y
+pip install ansible
+ansible --version
+
+#Add ansadmin user 
+useradd ansadmin
+passwd ansadmin
+
+#Giving root privilages to ansadmin user
+visudo 
+ansadmin ALL(ALL) NOPASSWD: ALL
+
+#Allowing PasswordAuthentication
+vi /etc/ssh/sshd_config
+#PasswordAuthentication line uncomment
+
+#Restart sshd service
+systemctl restart sshd
+
+#Creating a ansible folder and hosts and ansible.cfg file
+mkidr /etc/ansible
+
+vi hosts
+add localhost and ip of docker machine
+
+vi ansible.cfg
+copy and paste content from github url ( https://github.com/ansible/ansible/blob/stable-2.9/examples/ansible.cfg )
+
+
+#Now install docker on this machine
+sudo yum install docker -y
+sudo systemctl enable docker
+sudo systemctl start docker 
+sudo systemctl status docker
+
+#Adding ansadmin user to docker group
+usermod -a -G docker ansadmin
+
+
+#Generating ssh-key
+ssh-keygen
+
+#Copying public ssh key to docker machine and localhost
+ssh-copy-id localhost
+ssh-copy-id ansadmin@<private ip of docker machine>
+
+#Create a new folder and file as below
+sudo mkdir /opt/docker
+cd /opt/docker
+sudo cp -rf /etc/ansible/hosts /opt/docker
+
+#Changing permission of docker folder
+chown -R ansadmin:ansadmin docker 
+
+
+#Create dockerfile here
+vi Dockerfile
+
+FROM tomcat:latest
+MAINTAINER Vijaykumar
+COPY ./webapp.war /usr/local/tomcat/webapps/
+
+# Writing yaml file for building customized image
+
+vi simple-dev-image.yml
+
+---
+- hosts: all
+  become: true
+
+  tasks:
+  - name: build docker image using Dockerfile
+    command: docker build -t simple-dev-image .
+    args:
+      chdir: /opt/docker
+   
+  - name: create container using simple-dev-image
+    command: docker run -d --name simple-dev-container -p 8080:8080 simple-dev-image
+      
+#Now run the ansible command
+ansible-playbook -i hosts simple-dev-image.yml --limit localhost --check
+ansible-playbook -i hosts simple-dev-image.yml --limit localhost
+
+
+
+
+
+
+

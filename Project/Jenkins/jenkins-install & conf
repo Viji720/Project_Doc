@@ -1,0 +1,66 @@
+# Launch an Amazon-Ec2-instance and name it as Jenkins-server
+
+#Run below commands
+sudo -i
+sudo yum update
+hostname jenkins-server
+vi /etc/hostname
+
+#Installation of Java-11
+sudo yum install java-11* -y
+
+#Installation of Jenkins 
+sudo wget -O /etc/yum.repos.d/jenkins.repo \
+    https://pkg.jenkins.io/redhat-stable/jenkins.repo
+sudo rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io.key
+sudo yum update
+sudo yum install jenkins -y
+sudo systemctl enable jenkins
+sudo systemctl start jenkins
+sudo systemctl status jenkins
+
+#Installation of Maven
+wget https://dlcdn.apache.org/maven/maven-3/3.9.1/binaries/apache-maven-3.9.1-bin.tar.gz
+tar -xzvf  apache-maven-3.9.1-bin.tar.gz
+mv apache-maven-3.9.1 /opt/maven
+
+
+#Setting up java-home and maven-home profile
+find /usr/lib/jvm/java-11* | more -n 3
+#/usr/lib/jvm/java-11
+#/usr/lib/jvm/java-11-amazon-corretto
+#/usr/lib/jvm/java-11-amazon-corretto.x86_64
+
+vi .bash_profile     #Root user
+#Add below lines
+
+JAVA_HOME=/usr/lib/jvm/java-11-amazon-corretto.x86_64
+M2_HOME=/opt/maven
+M2=/opt/maven/bin
+
+PATH=$PATH:$HOME/bin:$JAVA_HOME:$M2_HOME:$M2
+
+export PATH
+
+
+#Now on browser paste the public ip of jenkins-server with port 8080
+cat /var/lib/jenkins/secrets/initialAdminPassword
+
+#Select Install suggested plugins and set username and password for jenkins login
+
+
+#Install git on jenkins-server
+yum install git -y
+
+#Now clone the git repo to local machine
+git clone <git repo link>
+
+git config --global user.name vijaykumar
+git config --global user.name vijaykumar
+
+git push origin master
+git user-name :- Viji720
+git password :- 
+
+
+

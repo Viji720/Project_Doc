@@ -1,0 +1,181 @@
+#Run a test job with free-style
+*********************************
+#Use execute-shell --> echo "Welcome to Devops Project"
+
+#Now setup jdk on jenkins-webpage
+*********************************
+#Go to manage-jenkins  --> global-tool-configuration  --> Select JDK
+# Name: JAVA_HOME
+# JAVA_HOME -->  /usr/lib/jvm/java-11-amazon-corretto.x86_64
+
+#Installing git plugin  on jenkins-webpage
+******************************************
+#Go to Manage-jenkins  --> Manage Plugins --> Available Pulgins  --> GitHub Integration
+
+#Installing maven plugin on jenkins-webpage
+********************************************
+#Go to Manage-jenkins  --> Manage Plugins --> Available Pulgins  --> Maven Release plugin
+
+#Now setup git on jenkins-webpage
+*********************************
+#Go to manage-jenkins  --> global-tool-configuration  --> Select GIT
+# Name: github
+
+#Now setup maven on jenkins-webpage
+************************************
+#Go to manage-jenkins  --> global-tool-configuration  --> Select Maven
+# Name: M2_HOME
+# M2_HOME -->  /opt/maven
+
+#Run Maven Project
+**********************
+#Name --> My_First_Maven_Build
+#Select Maven Project
+#Description --> Running Maven Project with Github
+# Select log rotation
+# Select git and give github repo
+# Enable poll SCM
+# Goals & options  --> clean package install
+# Apply and save
+
+
+#Final artifacts will be stored here
+cd /var/lib/jenkins/workspace
+
+#Installing deploy to container plugin on jenkins-webpage
+****************************************************
+#Go to Manage-jenkins  --> Manage Plugins --> Available Pulgins  --> Deploy to container plugin
+
+# Run New job on jenkins-server
+*******************************
+# Name --> Deploy_On_Tomcat_Server
+# Select --> Maven Project
+#Description --> Deploying artifacts to tomcat-server
+# Select log rotation
+# Select git and give github repo
+# Enable poll SCM
+# Goals & options  --> clean package install
+# Post-build Actions
+# WAR/EAR files   --> **/*.war
+# click on add-container -- select tomcat.8.x
+# add a tomcat user to jenkins-webpage (creds username - deployer password deployer )
+# tomcat URL --> <public ip of tomcat-server with port 8080 >
+# Apply and save
+
+
+#Installing deploy to container plugin on jenkins-webpage
+****************************************************
+#Go to Manage-jenkins  --> Manage Plugins --> Available Pulgins  --> Publish Over SSH plugin
+
+
+#Adding docker-server on ssh 
+#Go to Manage-jenkins  -->  Configure system --> under publish over ssh 
+--> add ssh server  
+--> Name : docker-server
+--> hostname : pub or private ip of docker-server
+--> username: dockeradmin
+--> advanced --> Use password authentication
+--> password for dockeradmin user type here
+
+
+#Creating a new job on jenkins
+*******************************
+Name:--> Deploy_On_Docker
+copy --> Deploy_On_Tomcat_Server
+
+Description  :- Deploying artifacts to docker-server
+# Select log rotation
+# Select git and give github repo
+# Enable poll SCM
+# Goals & options  --> clean package install
+# Post-build Actions
+# Remove old Tomcat-server contents
+# Select --> Send build artifacts over SSH
+# Name : --> docker-server
+# Source files : --> webapp/target/*.war
+# Remove prefix : --> webapp/target
+# Remote directory : --> .
+
+Apply & Save
+
+# This webapp.war file will be present on docker-server i.e /home/dockeradmin
+
+
+#Creating a new job on jenkins
+*********************************
+Name:--> Deploy_On_Docker_Container
+copy --> Deploy_On_Docker
+
+Description  :- Deploying artifacts to docker-container
+# Select log rotation
+# Select git and give github repo
+# Enable poll SCM
+# Goals & options  --> clean package install
+# Post-build Actions  ---> 
+# Remove old Tomcat-server contents
+# Select --> Send build artifacts over SSH
+# Name : --> docker-server
+# Source files : --> webapp/target/*.war
+# Remove prefix : --> webapp/target
+# Remote directory : --> .
+
+# Exec command  --> enter below line in exec command space
+cd /home/docker;docker build -t dev-project .;
+docker run -d --name mytomcat -p 8081:8080 dev-project;
+
+if container is already running means this job will get failure i.e unstable
+for that we will use ansible to automatically remove old container and deploy new container.
+
+
+
+#Adding ansible-server on ssh 
+#Go to Manage-jenkins  -->  Configure system --> under publish over ssh 
+--> add ssh server  
+--> Name : ansible-server
+--> hostname : pub or private ip of docker-server
+--> username: ansadmin
+--> advanced --> Use password authentication
+--> password for ansadmin user type here
+
+
+#Creating a new job on jenkins
+*********************************
+Name:--> Deploy_On_Docker_Container_Using_Ansible
+copy --> Deploy_On_Docker_Container
+
+Description  :- Deploying artifacts to docker-container using ansible
+# Select log rotation
+# Select git and give github repo
+# Enable poll SCM
+# Goals & options  --> clean package install
+# Post-build Actions  ---> 
+# Select --> Send build artifacts over SSH
+# Name : --> ansible-server
+# Source files : --> webapp/target/*.war
+# Remove prefix : --> webapp/target
+# Remote directory : --> //opt/docker
+
+# Exec command  --> enter below line in exec command space
+ansible-playbook -i /opt/docker/hosts /opt/docker/simple-dev-image.yml --limit localhost
+
+Apply & Save
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,72 @@
+# Launch an Amazon-Ec2-instance and name it as Docker-server
+
+Run below commands
+sudo -i
+sudo yum update
+hostname docker-server
+vi /etc/hostname
+
+#Installing docker 
+sudo yum install docker -y
+sudo systemctl enable docker
+sudo systemctl start docker 
+sudo systemctl status docker
+
+docker pull tomcat:latest
+docker run -d --name tomcat-10 -p 8080:8080 tomcat:latest
+
+docke pull tomcat:8.0
+docker run -d --name tomcat-8 -p 8085:8080 tomcat:8.0
+
+#Adding docker-user 
+useradd dockeradmin
+passwd dockeradmin
+
+#Adding dockeradmin user to docker group
+usermod -a -G docker dockeradmin
+
+#Allowing PasswordAuthentication
+vi /etc/ssh/sshd_config
+#PasswordAuthentication line uncomment
+
+#Restart sshd service
+systemctl restart sshd
+
+# Now login as dockeradmin
+su -l dockeradmin
+# Here webapp.war file will be present when you run Deploy_On_docker through jenkins-webpage
+
+
+vi Dockerfile
+FROM tomcat:latest
+MAINTAINER Vijaykumar
+COPY ./webapp.war /usr/local/tomcat/webapps/
+
+#Building a new container using webapp.war file
+docker build -t dev-project .
+
+#Run this new container using customized image
+docker run -d --name mytomcat -p 8080:8080 dev-project
+
+
+#Add ansadmin user 
+useradd ansadmin
+passwd ansadmin
+
+
+#Add ansadmin to docker group
+usermod -a -G docker ansadmin
+
+
+
+
+
+
+
+	
+
+
+
+
+
+

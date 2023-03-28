@@ -1,0 +1,56 @@
+# Launch an Amazon-Ec2-instance and name it as Tomcat-server
+
+sudo -i
+sudo yum update
+hostname tomcat-server
+vi /etc/hostname
+
+#Installation of Java-11
+sudo yum install java-11* -y
+
+#Installation of Tomcat
+sudo wget https://dlcdn.apache.org/tomcat/tomcat-8/v8.5.87/bin/apache-tomcat-8.5.87.tar.gz
+tar -xzvf apache-tomcat-8.5.87.tar.gz
+mv apache-tomcat-8.5.87 /opt/tomcat
+
+
+#Setting up java-home profile
+find /usr/lib/jvm/java-11* | more -n 3
+#/usr/lib/jvm/java-11
+#/usr/lib/jvm/java-11-amazon-corretto
+#/usr/lib/jvm/java-11-amazon-corretto.x86_64
+
+vi .bash_profile     #Root user
+#Add below lines
+
+JAVA_HOME=/usr/lib/jvm/java-11-amazon-corretto.x86_64
+
+PATH=$PATH:$HOME/bin:$JAVA_HOME
+
+export PATH
+
+#Modifing the tomcat application configurations
+cd /opt/tomcat/
+find / -name context.xml
+
+#Comment the valve line in two file as mentioned below (use <!-- and --> )
+vi /opt/tomcat/webapps/manager/META-INF/context.xml
+vi /opt/tomcat/webapps/host-manager/META-INF/context.xml
+
+# add a new user in /opt/tomcat/conf/tomcat-user.xml file
+<role rolename="manager-gui"/>
+<role rolename="manager-script"/>
+<role rolename="manager-jmx"/>
+<role rolename="manager-status"/>
+<user username="admin" password="admin" roles="manager-gui, manager-script, manager-jmx, manager-status"/>
+<user username="deployer" password="deployer" roles="manager-script"/>
+<user username="tomcat" password="s3cret" roles="manager-gui"/>
+
+#Starting tomcat-application
+cd /opt/tomcat/bin
+./startup.sh
+
+
+
+
+
